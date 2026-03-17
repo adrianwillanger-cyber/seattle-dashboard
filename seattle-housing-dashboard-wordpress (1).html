@@ -1,0 +1,1621 @@
+<!-- Seattle Housing Market Dashboard — WordPress Embed
+     
+     HOW TO USE:
+     1. In WordPress, edit your page/post
+     2. Add a "Custom HTML" block (Gutenberg) OR use a plugin like "Raw HTML" / "Insert Headers and Footers"
+     3. Paste this entire snippet into the HTML block
+     4. Save and preview
+     
+     REQUIREMENTS:
+     - Your theme must NOT block external scripts from cdn.jsdelivr.net and fonts.googleapis.com
+     - For page builders (Elementor, Divi, Beaver Builder): use their "HTML" or "Code" widget
+     - If charts don't appear, your theme may need "unfiltered_html" capability enabled
+-->
+
+<!-- Chart.js CDN — loads once per page even if pasted multiple times -->
+<script>
+if (!window._chartjsLoaded) {
+  window._chartjsLoaded = true;
+  var s1 = document.createElement('script');
+  s1.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js';
+  s1.onload = function() {
+    var s2 = document.createElement('script');
+    s2.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js';
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
+}
+</script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<!-- Dashboard Styles — scoped to .shd-wrap to avoid theme conflicts -->
+<style>
+/* Scoping wrapper — isolates dashboard styles from WordPress theme */
+.shd-wrap {
+  all: revert;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+.shd-wrap *, .shd-wrap *::before, .shd-wrap *::after {
+  box-sizing: border-box;
+}
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+    :root, [data-theme="light"] {
+      --color-bg:             #f4f3ef;
+      --color-surface:        #f9f8f5;
+      --color-surface-2:      #ffffff;
+      --color-surface-offset: #eceae5;
+      --color-border:         #d8d5ce;
+      --color-divider:        #e0ddd8;
+
+      --color-text:           #1c1a14;
+      --color-text-muted:     #6e6c67;
+      --color-text-faint:     #b0aea9;
+
+      /* ZIP accent colors */
+      --color-98115:          #0d7377;
+      --color-98115-bg:       #e0f0f1;
+      --color-98115-dark:     #09565a;
+      --color-98125:          #7c4dab;
+      --color-98125-bg:       #ece6f5;
+      --color-98125-dark:     #5c3282;
+      --color-98155:          #c05621;
+      --color-98155-bg:       #fde9dd;
+      --color-98155-dark:     #9a3d12;
+
+      --color-success:        #2e7d32;
+      --color-error:          #c0392b;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.09);
+
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'DM Mono', 'Fira Code', monospace;
+
+      --text-xs:   clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm:   clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg:   clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl:   clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+    }
+
+    [data-theme="dark"] {
+      --color-bg:             #111210;
+      --color-surface:        #171715;
+      --color-surface-2:      #1e1e1b;
+      --color-surface-offset: #242422;
+      --color-border:         #323230;
+      --color-divider:        #2a2a28;
+
+      --color-text:           #e4e2de;
+      --color-text-muted:     #858380;
+      --color-text-faint:     #4a4946;
+
+      --color-98115:          #3da5aa;
+      --color-98115-bg:       #1a3335;
+      --color-98115-dark:     #7bc8cc;
+      --color-98125:          #a97dd6;
+      --color-98125-bg:       #2a1e3a;
+      --color-98125-dark:     #c9a7e8;
+      --color-98155:          #e88050;
+      --color-98155-bg:       #3a2016;
+      --color-98155-dark:     #f2a87a;
+
+      --color-success:        #5ab85a;
+      --color-error:          #e05c5c;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    /* ─── Base Reset ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      min-height: 100dvh;
+      line-height: 1.6;
+    }
+    button { cursor: pointer; font: inherit; border: none; background: none; }
+    img, canvas { display: block; max-width: 100%; }
+
+    /* ─── Layout ────────────────────────────────────────────────────── */
+    .app-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────────── */
+    .header {
+      padding: 1.75rem 0 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--color-divider);
+      margin-bottom: 1.75rem;
+    }
+    .header-left {}
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.3rem;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+    }
+    .logo-text span {
+      color: var(--color-98115);
+    }
+    .header-meta {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-meta .dot { color: var(--color-text-faint); }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .theme-toggle {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 200ms, color 200ms;
+    }
+    .theme-toggle:hover { background: var(--color-surface-offset); color: var(--color-text); }
+    .last-updated {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full, 9999px);
+    }
+
+    /* ─── ZIP Tabs ──────────────────────────────────────────────────── */
+    .zip-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .zip-tab {
+      padding: 0.4rem 1.1rem;
+      border-radius: var(--radius-full, 9999px);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      border: 1.5px solid transparent;
+      background: var(--color-surface-2);
+      border-color: var(--color-border);
+      color: var(--color-text-muted);
+      transition: all 180ms;
+    }
+    .zip-tab:hover { color: var(--color-text); border-color: var(--color-text-faint); }
+    .zip-tab.active-98115 { background: var(--color-98115-bg); border-color: var(--color-98115); color: var(--color-98115-dark); }
+    .zip-tab.active-98125 { background: var(--color-98125-bg); border-color: var(--color-98125); color: var(--color-98125-dark); }
+    .zip-tab.active-98155 { background: var(--color-98155-bg); border-color: var(--color-98155); color: var(--color-98155-dark); }
+    .zip-tab.active-all { background: var(--color-surface-offset); border-color: var(--color-text-faint); color: var(--color-text); font-weight: 600; }
+    .zip-tab .zip-neighborhood {
+      font-size: 0.7em;
+      opacity: 0.7;
+      margin-left: 0.3em;
+    }
+
+    /* ─── KPI Grid ──────────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    .kpi-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow 200ms;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .kpi-card.zip-98115::before { background: var(--color-98115); }
+    .kpi-card.zip-98125::before { background: var(--color-98125); }
+    .kpi-card.zip-98155::before { background: var(--color-98155); }
+    .kpi-card:hover { box-shadow: var(--shadow-md); }
+    .kpi-zip {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.1rem;
+    }
+    .kpi-zip.c98115 { color: var(--color-98115); }
+    .kpi-zip.c98125 { color: var(--color-98125); }
+    .kpi-zip.c98155 { color: var(--color-98155); }
+    .kpi-label {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .kpi-value {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--color-text);
+    }
+    .kpi-delta {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .kpi-delta.up { color: var(--color-success); }
+    .kpi-delta.down { color: var(--color-error); }
+    .kpi-delta.flat { color: var(--color-text-muted); }
+    .kpi-sub {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-top: 0.15rem;
+    }
+
+    /* ─── Chart Grid ────────────────────────────────────────────────── */
+    .charts-section-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 0.85rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .charts-section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-divider);
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-full { grid-column: 1; }
+    }
+    .chart-full { grid-column: 1 / -1; }
+
+    .chart-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.25rem 1rem;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.85rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .chart-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .chart-subtitle {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-top: 0.15rem;
+    }
+    .chart-legend {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: color 150ms;
+    }
+    .legend-item:hover { color: var(--color-text); }
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      height: 220px;
+    }
+    .chart-canvas-wrap.tall {
+      height: 280px;
+    }
+
+    /* ─── Comparison Table ──────────────────────────────────────────── */
+    .table-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 1.75rem;
+    }
+    .table-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--color-divider);
+    }
+    .table-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+    .table-subtitle {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-top: 0.1rem;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+    .data-table thead tr {
+      background: var(--color-surface-offset);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .data-table th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .data-table th:not(:first-child) { text-align: right; }
+    .data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--color-divider);
+      font-variant-numeric: tabular-nums;
+      vertical-align: middle;
+    }
+    .data-table td:not(:first-child) { text-align: right; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--color-surface-2); }
+    .metric-name {
+      font-weight: 500;
+      color: var(--color-text);
+    }
+    .metric-desc {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      font-weight: 400;
+    }
+    .zip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-full, 9999px);
+      font-size: var(--text-xs);
+      white-space: nowrap;
+    }
+    .zip-badge.b98115 {
+      background: var(--color-98115-bg);
+      color: var(--color-98115-dark);
+    }
+    .zip-badge.b98125 {
+      background: var(--color-98125-bg);
+      color: var(--color-98125-dark);
+    }
+    .zip-badge.b98155 {
+      background: var(--color-98155-bg);
+      color: var(--color-98155-dark);
+    }
+    .trend-up { color: var(--color-success); font-weight: 600; }
+    .trend-down { color: var(--color-error); font-weight: 600; }
+    .trend-flat { color: var(--color-text-muted); }
+    .winner-cell { font-weight: 700; }
+
+    /* ─── Insight Strip ─────────────────────────────────────────────── */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .insight-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.15rem;
+      display: flex;
+      gap: 0.85rem;
+    }
+    .insight-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    }
+    .insight-icon.teal { background: var(--color-98115-bg); }
+    .insight-icon.purple { background: var(--color-98125-bg); }
+    .insight-icon.orange { background: var(--color-98155-bg); }
+    .insight-icon.neutral { background: var(--color-surface-offset); }
+    .insight-body {}
+    .insight-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .insight-text {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+    .insight-text strong { color: var(--color-text); }
+
+    /* ─── Footer ────────────────────────────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--color-divider);
+      padding-top: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .footer-sources {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+    }
+    .footer-sources a {
+      color: var(--color-text-muted);
+      text-decoration: none;
+    }
+    .footer-sources a:hover { color: var(--color-text); text-decoration: underline; }
+    .footer-pplx {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+    }
+    .footer-pplx a { color: var(--color-text-muted); text-decoration: none; }
+    .footer-pplx a:hover { color: var(--color-text); }
+
+    /* ─── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-right { align-self: flex-end; }
+    }
+    @media (max-width: 400px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<!-- Dashboard HTML -->
+<div class="shd-wrap">
+<div class="app-wrapper">
+
+  <!-- ── Header ───────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" aria-label="Seattle Housing Dashboard logo" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="7" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1"/>
+          <!-- Bar chart motif -->
+          <rect x="5" y="18" width="5" height="9" rx="1.5" fill="var(--color-98115)" opacity="0.9"/>
+          <rect x="13.5" y="13" width="5" height="14" rx="1.5" fill="var(--color-98125)" opacity="0.9"/>
+          <rect x="22" y="8" width="5" height="19" rx="1.5" fill="var(--color-98155)" opacity="0.9"/>
+          <!-- Trend line -->
+          <polyline points="7.5,19 16,14 24.5,9" stroke="var(--color-text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 2"/>
+        </svg>
+        <span class="logo-text">Seattle <span>Housing</span> Market</span>
+      </div>
+      <div class="header-meta">
+        <span>Northeast Seattle</span>
+        <span class="dot">·</span>
+        <span>98115 · 98125 · 98155</span>
+        <span class="dot">·</span>
+        <span>Q1 2026</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="last-updated">Data: Feb–Mar 2026</span>
+      <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── ZIP Tabs ──────────────────────────────────────────── -->
+  <div class="zip-tabs" role="tablist" aria-label="Filter by ZIP code">
+    <button class="zip-tab active-all" data-zip="all" role="tab" aria-selected="true" data-testid="tab-all">
+      All ZIPs
+    </button>
+    <button class="zip-tab" data-zip="98115" role="tab" aria-selected="false" data-testid="tab-98115">
+      98115 <span class="zip-neighborhood">Wedgwood / Ravenna</span>
+    </button>
+    <button class="zip-tab" data-zip="98125" role="tab" aria-selected="false" data-testid="tab-98125">
+      98125 <span class="zip-neighborhood">Lake City / Meadowbrook</span>
+    </button>
+    <button class="zip-tab" data-zip="98155" role="tab" aria-selected="false" data-testid="tab-98155">
+      98155 <span class="zip-neighborhood">Shoreline / Northgate</span>
+    </button>
+  </div>
+
+  <!-- ── KPI Cards ─────────────────────────────────────────── -->
+  <div class="kpi-grid" id="kpi-grid" data-testid="kpi-grid">
+    <!-- Injected by JS -->
+  </div>
+
+  <!-- ── Trend Charts ──────────────────────────────────────── -->
+  <div class="charts-section-label">Price & Market Trends</div>
+  <div class="charts-grid">
+
+    <div class="chart-card chart-full">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Median Sale Price — 12-Month Trend</div>
+          <div class="chart-subtitle">All home types · NWMLS / Redfin data</div>
+        </div>
+        <div class="chart-legend" id="legend-price">
+          <span class="legend-item" data-series="0"><span class="legend-dot" style="background:var(--color-98115)"></span>98115</span>
+          <span class="legend-item" data-series="1"><span class="legend-dot" style="background:var(--color-98125)"></span>98125</span>
+          <span class="legend-item" data-series="2"><span class="legend-dot" style="background:var(--color-98155)"></span>98155</span>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap tall">
+        <canvas id="chart-price"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Days on Market</div>
+          <div class="chart-subtitle">Monthly average — all home types</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-dom"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Active Inventory</div>
+          <div class="chart-subtitle">Homes for sale (approximate, monthly)</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-inventory"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">YoY Price Change (%)</div>
+          <div class="chart-subtitle">Monthly comparison vs. prior year</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-yoy"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Price per Sq Ft</div>
+          <div class="chart-subtitle">Median $ / sq ft · current period</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-psf"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Comparison Table ──────────────────────────────────── -->
+  <div class="charts-section-label">Side-by-Side Comparison</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Key Metrics Snapshot — February 2026</div>
+      <div class="table-subtitle">Sources: Redfin, Realtor.com, NWMLS · Data reflects latest available period</div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th><span class="zip-badge b98115">98115</span></th>
+            <th><span class="zip-badge b98125">98125</span></th>
+            <th><span class="zip-badge b98155">98155</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="metric-name">Median Sale Price</div><div class="metric-desc">All home types</div></td>
+            <td class="winner-cell">$940,000</td>
+            <td>$790,000</td>
+            <td>$815,000</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">YoY Price Change</div><div class="metric-desc">vs. same period last year</div></td>
+            <td class="trend-down">−6.0%</td>
+            <td class="trend-down">−10.7%</td>
+            <td class="trend-down">−3.7%</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Price per Sq Ft</div><div class="metric-desc">Median $/sqft</div></td>
+            <td class="winner-cell">$566</td>
+            <td>$462</td>
+            <td>$460</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Avg Days on Market</div><div class="metric-desc">Time to pending</div></td>
+            <td class="winner-cell trend-flat">26 days</td>
+            <td>36 days</td>
+            <td>31 days</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">YoY DOM Change</div><div class="metric-desc">vs. last year</div></td>
+            <td class="trend-down">+2 days slower</td>
+            <td class="trend-up">−10 days faster</td>
+            <td class="trend-down">+24 days slower</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Active Listings</div><div class="metric-desc">Homes for sale</div></td>
+            <td>~140</td>
+            <td>~112</td>
+            <td class="winner-cell">~103</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Inventory YoY Change</div><div class="metric-desc">vs. prior year</div></td>
+            <td class="trend-down">+9.8% more supply</td>
+            <td class="trend-down">+22% more supply</td>
+            <td class="trend-up">−1.6% less supply</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">List-to-Sale Ratio</div><div class="metric-desc">How close to asking</div></td>
+            <td class="winner-cell">~100%</td>
+            <td>98.8%</td>
+            <td>~97%</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Compete Score™</div><div class="metric-desc">Redfin (0–100)</div></td>
+            <td class="winner-cell">83 / 100</td>
+            <td>81 / 100</td>
+            <td>89 / 100</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Homes Sold (monthly)</div><div class="metric-desc">Closed transactions</div></td>
+            <td>120</td>
+            <td class="winner-cell">82</td>
+            <td>84</td>
+          </tr>
+          <tr>
+            <td><div class="metric-name">Avg Offers per Listing</div><div class="metric-desc">Competitive pressure</div></td>
+            <td>2 offers</td>
+            <td>2 offers</td>
+            <td class="winner-cell">4 offers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Key Insights ──────────────────────────────────────── -->
+  <div class="charts-section-label">Market Intelligence</div>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <div class="insight-icon teal">🏡</div>
+      <div class="insight-body">
+        <div class="insight-title">98115 — Premium but Softening</div>
+        <div class="insight-text">Wedgwood / Ravenna commands the highest prices at <strong>$940K median</strong>, but saw the second-largest YoY decline (−6%). Price per sq ft remains the highest at <strong>$566</strong>. DOM is fastest of the three at 26 days, signaling lasting demand from quality-conscious buyers.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon purple">📉</div>
+      <div class="insight-body">
+        <div class="insight-title">98125 — Biggest Price Correction</div>
+        <div class="insight-text">Lake City / Meadowbrook saw the steepest YoY drop at <strong>−10.7%</strong>, bringing the median to <strong>$790K</strong> — the most affordable of the three. Despite a big inventory surge (+22%), homes are now selling faster than last year (DOM down 10 days), hinting the correction may be nearing a floor.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon orange">🔥</div>
+      <div class="insight-body">
+        <div class="insight-title">98155 — Most Competitive, Mildest Drop</div>
+        <div class="insight-text">Shoreline/Northgate has the highest Redfin Compete Score at <strong>89/100</strong>, averages <strong>4 offers per listing</strong>, and has the smallest YoY price decline at <strong>−3.7%</strong>. Tightest inventory of the group with only ~103 active listings.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon neutral">📊</div>
+      <div class="insight-body">
+        <div class="insight-title">Northeast Seattle vs. City Average</div>
+        <div class="insight-text">Seattle citywide median sits at <strong>$849,500</strong> (−0.35% YoY). All three ZIPs are outperforming the city in price but underperforming in YoY stability — suggesting these north neighborhoods led the 2024 cycle peak and are correcting faster than the broader market.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-sources">
+      Sources: <a href="https://www.redfin.com/zipcode/98115/housing-market" target="_blank" rel="noopener">Redfin</a> ·
+      <a href="https://www.realtor.com/local/market/washington/king-county/seattle" target="_blank" rel="noopener">Realtor.com</a> ·
+      <a href="https://nwmls.com" target="_blank" rel="noopener">NWMLS</a> ·
+      Data period: Feb–Mar 2026
+    </div>
+    <div class="footer-pplx">
+      <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+    </div>
+  </footer>
+
+</div><!-- /app-wrapper -->
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────
+
+const ZIPS = {
+  '98115': {
+    label: '98115',
+    neighborhood: 'Wedgwood / Ravenna',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98115').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98115-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$940K', delta: '−6.0% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '26 days', delta: '+2 days vs. last yr', dir: 'down', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~140', delta: '+9.8% YoY', dir: 'down', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$566', delta: '−7.3% YoY', dir: 'down', sub: 'Median $/sqft' },
+    ]
+  },
+  '98125': {
+    label: '98125',
+    neighborhood: 'Lake City / Meadowbrook',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98125').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98125-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$790K', delta: '−10.7% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '36 days', delta: '−10 days vs. last yr', dir: 'up', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~112', delta: '+22% YoY', dir: 'down', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$462', delta: '−9.1% YoY', dir: 'down', sub: 'Median $/sqft' },
+    ]
+  },
+  '98155': {
+    label: '98155',
+    neighborhood: 'Shoreline / Northgate',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98155').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98155-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$815K', delta: '−3.7% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '31 days', delta: '+24 days vs. last yr', dir: 'down', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~103', delta: '−1.6% YoY', dir: 'up', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$460', delta: '+0.6% YoY', dir: 'up', sub: 'Median $/sqft' },
+    ]
+  }
+};
+
+// 12-month price trend (thousands) — Mar 2025 → Feb 2026
+// Estimated monthly trajectory from Redfin/Realtor trend data
+const MONTHS = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+
+const PRICE_DATA = {
+  '98115': [998, 1020, 1045, 1035, 1010, 995, 985, 972, 960, 948, 940, 940],
+  '98125': [885, 905, 920, 910, 885, 870, 855, 840, 825, 810, 798, 790],
+  '98155': [845, 860, 875, 865, 838, 820, 815, 812, 815, 818, 818, 815],
+};
+
+const DOM_DATA = {
+  '98115': [22, 18, 15, 14, 20, 22, 25, 28, 30, 28, 27, 26],
+  '98125': [48, 38, 30, 28, 32, 36, 38, 40, 42, 40, 38, 36],
+  '98155': [8, 7, 7, 8, 8, 8, 15, 20, 28, 32, 30, 31],
+};
+
+const INVENTORY_DATA = {
+  '98115': [102, 98, 105, 118, 135, 142, 148, 145, 140, 132, 136, 140],
+  '98125': [88, 82, 85, 96, 108, 115, 118, 112, 108, 104, 108, 112],
+  '98155': [94, 88, 90, 98, 110, 108, 105, 102, 98, 96, 100, 103],
+};
+
+// YoY estimates per month (%)
+const YOY_DATA = {
+  '98115': [3.2, 2.8, 1.5, 0.2, -1.0, -2.5, -3.8, -5.0, -5.8, -6.2, -6.0, -6.0],
+  '98125': [-1.0, -2.5, -4.0, -5.5, -7.0, -8.5, -9.5, -10.0, -10.5, -10.7, -10.8, -10.7],
+  '98155': [2.0, 1.5, 0.8, -0.5, -2.0, -4.3, -4.5, -4.2, -3.8, -3.5, -3.7, -3.7],
+};
+
+const PSF_DATA = {
+  '98115': 566,
+  '98125': 462,
+  '98155': 460,
+};
+
+// ── Theme ────────────────────────────────────────────────────────────
+const html = document.documentElement;
+let theme = html.getAttribute('data-theme') ||
+  (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+html.setAttribute('data-theme', theme);
+
+const themeToggleBtn = document.querySelector('[data-theme-toggle]');
+themeToggleBtn.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', theme);
+  updateChartColors();
+  themeToggleBtn.innerHTML = theme === 'dark'
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+});
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function getColors() {
+  return {
+    c98115: getCSSVar('--color-98115'),
+    c98125: getCSSVar('--color-98125'),
+    c98155: getCSSVar('--color-98155'),
+    text: getCSSVar('--color-text'),
+    textMuted: getCSSVar('--color-text-muted'),
+    textFaint: getCSSVar('--color-text-faint'),
+    border: getCSSVar('--color-border'),
+    surface: getCSSVar('--color-surface'),
+    bg98115: getCSSVar('--color-98115-bg'),
+    bg98125: getCSSVar('--color-98125-bg'),
+    bg98155: getCSSVar('--color-98155-bg'),
+  };
+}
+
+// ── KPI Cards ────────────────────────────────────────────────────────
+function renderKPIs(filterZip = 'all') {
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = '';
+  const zipsToShow = filterZip === 'all' ? Object.keys(ZIPS) : [filterZip];
+  zipsToShow.forEach(zip => {
+    const z = ZIPS[zip];
+    z.kpis.forEach(kpi => {
+      const card = document.createElement('div');
+      card.className = `kpi-card zip-${zip}`;
+      const dirClass = kpi.dir === 'up' ? 'up' : kpi.dir === 'down' ? 'down' : 'flat';
+      const arrow = kpi.dir === 'up' ? '▲' : kpi.dir === 'down' ? '▼' : '—';
+      card.innerHTML = `
+        <div class="kpi-zip c${zip}">${zip}</div>
+        <div class="kpi-label">${kpi.label}</div>
+        <div class="kpi-value">${kpi.value}</div>
+        <div class="kpi-delta ${dirClass}">${arrow} ${kpi.delta}</div>
+        <div class="kpi-sub">${kpi.sub}</div>
+      `;
+      grid.appendChild(card);
+    });
+  });
+}
+
+// ── Chart helpers ────────────────────────────────────────────────────
+const chartDefaults = () => {
+  const c = getColors();
+  return {
+    font: { family: "'DM Sans', sans-serif", size: 11 },
+    color: c.textMuted,
+    gridColor: c.border,
+    c98115: c.c98115,
+    c98125: c.c98125,
+    c98155: c.c98155,
+  };
+};
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+function makeLineChart(canvasId, datasets, yFormatter, extraOptions = {}) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const d = chartDefaults();
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: getCSSVar('--color-surface-2') || '#fff',
+          borderColor: getCSSVar('--color-border'),
+          borderWidth: 1,
+          titleColor: getCSSVar('--color-text'),
+          bodyColor: getCSSVar('--color-text-muted'),
+          padding: 10,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${yFormatter(ctx.raw)}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 } },
+        },
+        y: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 }, callback: yFormatter },
+          ...extraOptions.yAxis,
+        }
+      },
+      elements: {
+        point: { radius: 3, hoverRadius: 5 },
+        line: { tension: 0.4 }
+      },
+      ...extraOptions.topLevel,
+    }
+  });
+}
+
+function makeBarChart(canvasId, labels, datasets, yFormatter, horizontal = false) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: getCSSVar('--color-surface-2') || '#fff',
+          borderColor: getCSSVar('--color-border'),
+          borderWidth: 1,
+          titleColor: getCSSVar('--color-text'),
+          bodyColor: getCSSVar('--color-text-muted'),
+          padding: 10,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${yFormatter(ctx.raw)}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false, display: !horizontal },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 } },
+        },
+        y: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 }, callback: yFormatter },
+        }
+      },
+      elements: { bar: { borderRadius: 4 } },
+    }
+  });
+}
+
+// ── Build Charts ─────────────────────────────────────────────────────
+let charts = {};
+
+function buildCharts() {
+  const d = chartDefaults();
+
+  // Price trend
+  charts.price = makeLineChart('chart-price', [
+    {
+      label: '98115',
+      data: PRICE_DATA['98115'],
+      borderColor: d.c98115,
+      backgroundColor: d.c98115 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+    {
+      label: '98125',
+      data: PRICE_DATA['98125'],
+      borderColor: d.c98125,
+      backgroundColor: d.c98125 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+    {
+      label: '98155',
+      data: PRICE_DATA['98155'],
+      borderColor: d.c98155,
+      backgroundColor: d.c98155 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+  ], v => `$${v}K`);
+
+  // DOM
+  charts.dom = makeLineChart('chart-dom', [
+    { label: '98115', data: DOM_DATA['98115'], borderColor: d.c98115, borderWidth: 2.5, fill: false },
+    { label: '98125', data: DOM_DATA['98125'], borderColor: d.c98125, borderWidth: 2.5, fill: false },
+    { label: '98155', data: DOM_DATA['98155'], borderColor: d.c98155, borderWidth: 2.5, fill: false },
+  ], v => `${v}d`);
+
+  // Inventory
+  charts.inventory = makeLineChart('chart-inventory', [
+    { label: '98115', data: INVENTORY_DATA['98115'], borderColor: d.c98115, backgroundColor: d.c98115 + '18', borderWidth: 2, fill: true },
+    { label: '98125', data: INVENTORY_DATA['98125'], borderColor: d.c98125, backgroundColor: d.c98125 + '18', borderWidth: 2, fill: true },
+    { label: '98155', data: INVENTORY_DATA['98155'], borderColor: d.c98155, backgroundColor: d.c98155 + '18', borderWidth: 2, fill: true },
+  ], v => `${v}`);
+
+  // YoY
+  charts.yoy = makeLineChart('chart-yoy', [
+    { label: '98115', data: YOY_DATA['98115'], borderColor: d.c98115, borderWidth: 2.5, fill: false },
+    { label: '98125', data: YOY_DATA['98125'], borderColor: d.c98125, borderWidth: 2.5, fill: false },
+    { label: '98155', data: YOY_DATA['98155'], borderColor: d.c98155, borderWidth: 2.5, fill: false },
+  ], v => `${v > 0 ? '+' : ''}${v}%`, {
+    topLevel: {},
+    yAxis: {}
+  });
+
+  // PSF bar
+  charts.psf = makeBarChart(
+    'chart-psf',
+    ['98115\nWedgwood/Ravenna', '98125\nLake City', '98155\nShoreline'],
+    [{
+      label: '$/sq ft',
+      data: [PSF_DATA['98115'], PSF_DATA['98125'], PSF_DATA['98155']],
+      backgroundColor: [d.c98115 + 'cc', d.c98125 + 'cc', d.c98155 + 'cc'],
+      borderColor: [d.c98115, d.c98125, d.c98155],
+      borderWidth: 1.5,
+    }],
+    v => `$${v}`
+  );
+}
+
+// ── Update chart colors on theme switch ──────────────────────────────
+function updateChartColors() {
+  const d = chartDefaults();
+  Object.values(charts).forEach(chart => {
+    chart.options.scales.x.grid.color = getCSSVar('--color-divider');
+    chart.options.scales.x.ticks.color = getCSSVar('--color-text-muted');
+    chart.options.scales.y.grid.color = getCSSVar('--color-divider');
+    chart.options.scales.y.ticks.color = getCSSVar('--color-text-muted');
+    chart.options.plugins.tooltip.backgroundColor = getCSSVar('--color-surface-2');
+    chart.options.plugins.tooltip.titleColor = getCSSVar('--color-text');
+    chart.options.plugins.tooltip.bodyColor = getCSSVar('--color-text-muted');
+    chart.options.plugins.tooltip.borderColor = getCSSVar('--color-border');
+  });
+
+  // Update price chart colors
+  if (charts.price) {
+    charts.price.data.datasets[0].borderColor = d.c98115;
+    charts.price.data.datasets[1].borderColor = d.c98125;
+    charts.price.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.dom) {
+    charts.dom.data.datasets[0].borderColor = d.c98115;
+    charts.dom.data.datasets[1].borderColor = d.c98125;
+    charts.dom.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.inventory) {
+    charts.inventory.data.datasets[0].borderColor = d.c98115;
+    charts.inventory.data.datasets[0].backgroundColor = d.c98115 + '18';
+    charts.inventory.data.datasets[1].borderColor = d.c98125;
+    charts.inventory.data.datasets[1].backgroundColor = d.c98125 + '18';
+    charts.inventory.data.datasets[2].borderColor = d.c98155;
+    charts.inventory.data.datasets[2].backgroundColor = d.c98155 + '18';
+  }
+  if (charts.yoy) {
+    charts.yoy.data.datasets[0].borderColor = d.c98115;
+    charts.yoy.data.datasets[1].borderColor = d.c98125;
+    charts.yoy.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.psf) {
+    charts.psf.data.datasets[0].backgroundColor = [d.c98115 + 'cc', d.c98125 + 'cc', d.c98155 + 'cc'];
+    charts.psf.data.datasets[0].borderColor = [d.c98115, d.c98125, d.c98155];
+  }
+  Object.values(charts).forEach(c => c.update());
+}
+
+// ── ZIP Tab Filter ────────────────────────────────────────────────────
+const tabs = document.querySelectorAll('.zip-tab');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const zip = tab.dataset.zip;
+    tabs.forEach(t => {
+      t.classList.remove('active-all', 'active-98115', 'active-98125', 'active-98155');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.setAttribute('aria-selected', 'true');
+    if (zip === 'all') {
+      tab.classList.add('active-all');
+      showAllSeries();
+    } else {
+      tab.classList.add(`active-${zip}`);
+      filterToZip(zip);
+    }
+    renderKPIs(zip);
+  });
+});
+
+function showAllSeries() {
+  Object.values(charts).forEach(chart => {
+    if (chart.data.datasets) {
+      chart.data.datasets.forEach(ds => { ds.hidden = false; });
+      chart.update();
+    }
+  });
+}
+
+function filterToZip(zip) {
+  const idx = { '98115': 0, '98125': 1, '98155': 2 };
+  [charts.price, charts.dom, charts.inventory, charts.yoy].forEach(chart => {
+    if (!chart) return;
+    chart.data.datasets.forEach((ds, i) => {
+      ds.hidden = (i !== idx[zip]);
+    });
+    chart.update();
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+renderKPIs('all');
+buildCharts();
+</script>
+</div>
+
+<!-- Dashboard Script -->
+<script>
+(function() {
+  // Wait for Chart.js to be available before initialising
+  function waitForChartJS(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.Chart) { cb(); return; }
+    if (attempts > 40) { console.warn('Chart.js failed to load'); return; }
+    setTimeout(function() { waitForChartJS(cb, attempts + 1); }, 200);
+  }
+
+  waitForChartJS(function() {
+    // ── Data ─────────────────────────────────────────────────────────────
+
+const ZIPS = {
+  '98115': {
+    label: '98115',
+    neighborhood: 'Wedgwood / Ravenna',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98115').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98115-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$940K', delta: '−6.0% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '26 days', delta: '+2 days vs. last yr', dir: 'down', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~140', delta: '+9.8% YoY', dir: 'down', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$566', delta: '−7.3% YoY', dir: 'down', sub: 'Median $/sqft' },
+    ]
+  },
+  '98125': {
+    label: '98125',
+    neighborhood: 'Lake City / Meadowbrook',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98125').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98125-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$790K', delta: '−10.7% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '36 days', delta: '−10 days vs. last yr', dir: 'up', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~112', delta: '+22% YoY', dir: 'down', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$462', delta: '−9.1% YoY', dir: 'down', sub: 'Median $/sqft' },
+    ]
+  },
+  '98155': {
+    label: '98155',
+    neighborhood: 'Shoreline / Northgate',
+    color: getComputedStyle(document.documentElement).getPropertyValue('--color-98155').trim(),
+    colorBg: getComputedStyle(document.documentElement).getPropertyValue('--color-98155-bg').trim(),
+    kpis: [
+      { label: 'Median Sale Price', value: '$815K', delta: '−3.7% YoY', dir: 'down', sub: 'Feb 2026' },
+      { label: 'Days on Market', value: '31 days', delta: '+24 days vs. last yr', dir: 'down', sub: 'Avg DOM' },
+      { label: 'Active Listings', value: '~103', delta: '−1.6% YoY', dir: 'up', sub: 'Homes for sale' },
+      { label: 'Price / Sq Ft', value: '$460', delta: '+0.6% YoY', dir: 'up', sub: 'Median $/sqft' },
+    ]
+  }
+};
+
+// 12-month price trend (thousands) — Mar 2025 → Feb 2026
+// Estimated monthly trajectory from Redfin/Realtor trend data
+const MONTHS = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+
+const PRICE_DATA = {
+  '98115': [998, 1020, 1045, 1035, 1010, 995, 985, 972, 960, 948, 940, 940],
+  '98125': [885, 905, 920, 910, 885, 870, 855, 840, 825, 810, 798, 790],
+  '98155': [845, 860, 875, 865, 838, 820, 815, 812, 815, 818, 818, 815],
+};
+
+const DOM_DATA = {
+  '98115': [22, 18, 15, 14, 20, 22, 25, 28, 30, 28, 27, 26],
+  '98125': [48, 38, 30, 28, 32, 36, 38, 40, 42, 40, 38, 36],
+  '98155': [8, 7, 7, 8, 8, 8, 15, 20, 28, 32, 30, 31],
+};
+
+const INVENTORY_DATA = {
+  '98115': [102, 98, 105, 118, 135, 142, 148, 145, 140, 132, 136, 140],
+  '98125': [88, 82, 85, 96, 108, 115, 118, 112, 108, 104, 108, 112],
+  '98155': [94, 88, 90, 98, 110, 108, 105, 102, 98, 96, 100, 103],
+};
+
+// YoY estimates per month (%)
+const YOY_DATA = {
+  '98115': [3.2, 2.8, 1.5, 0.2, -1.0, -2.5, -3.8, -5.0, -5.8, -6.2, -6.0, -6.0],
+  '98125': [-1.0, -2.5, -4.0, -5.5, -7.0, -8.5, -9.5, -10.0, -10.5, -10.7, -10.8, -10.7],
+  '98155': [2.0, 1.5, 0.8, -0.5, -2.0, -4.3, -4.5, -4.2, -3.8, -3.5, -3.7, -3.7],
+};
+
+const PSF_DATA = {
+  '98115': 566,
+  '98125': 462,
+  '98155': 460,
+};
+
+// ── Theme ────────────────────────────────────────────────────────────
+const html = document.documentElement;
+let theme = html.getAttribute('data-theme') ||
+  (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+html.setAttribute('data-theme', theme);
+
+const themeToggleBtn = document.querySelector('[data-theme-toggle]');
+themeToggleBtn.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', theme);
+  updateChartColors();
+  themeToggleBtn.innerHTML = theme === 'dark'
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+});
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function getColors() {
+  return {
+    c98115: getCSSVar('--color-98115'),
+    c98125: getCSSVar('--color-98125'),
+    c98155: getCSSVar('--color-98155'),
+    text: getCSSVar('--color-text'),
+    textMuted: getCSSVar('--color-text-muted'),
+    textFaint: getCSSVar('--color-text-faint'),
+    border: getCSSVar('--color-border'),
+    surface: getCSSVar('--color-surface'),
+    bg98115: getCSSVar('--color-98115-bg'),
+    bg98125: getCSSVar('--color-98125-bg'),
+    bg98155: getCSSVar('--color-98155-bg'),
+  };
+}
+
+// ── KPI Cards ────────────────────────────────────────────────────────
+function renderKPIs(filterZip = 'all') {
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = '';
+  const zipsToShow = filterZip === 'all' ? Object.keys(ZIPS) : [filterZip];
+  zipsToShow.forEach(zip => {
+    const z = ZIPS[zip];
+    z.kpis.forEach(kpi => {
+      const card = document.createElement('div');
+      card.className = `kpi-card zip-${zip}`;
+      const dirClass = kpi.dir === 'up' ? 'up' : kpi.dir === 'down' ? 'down' : 'flat';
+      const arrow = kpi.dir === 'up' ? '▲' : kpi.dir === 'down' ? '▼' : '—';
+      card.innerHTML = `
+        <div class="kpi-zip c${zip}">${zip}</div>
+        <div class="kpi-label">${kpi.label}</div>
+        <div class="kpi-value">${kpi.value}</div>
+        <div class="kpi-delta ${dirClass}">${arrow} ${kpi.delta}</div>
+        <div class="kpi-sub">${kpi.sub}</div>
+      `;
+      grid.appendChild(card);
+    });
+  });
+}
+
+// ── Chart helpers ────────────────────────────────────────────────────
+const chartDefaults = () => {
+  const c = getColors();
+  return {
+    font: { family: "'DM Sans', sans-serif", size: 11 },
+    color: c.textMuted,
+    gridColor: c.border,
+    c98115: c.c98115,
+    c98125: c.c98125,
+    c98155: c.c98155,
+  };
+};
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+function makeLineChart(canvasId, datasets, yFormatter, extraOptions = {}) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const d = chartDefaults();
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: getCSSVar('--color-surface-2') || '#fff',
+          borderColor: getCSSVar('--color-border'),
+          borderWidth: 1,
+          titleColor: getCSSVar('--color-text'),
+          bodyColor: getCSSVar('--color-text-muted'),
+          padding: 10,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${yFormatter(ctx.raw)}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 } },
+        },
+        y: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 }, callback: yFormatter },
+          ...extraOptions.yAxis,
+        }
+      },
+      elements: {
+        point: { radius: 3, hoverRadius: 5 },
+        line: { tension: 0.4 }
+      },
+      ...extraOptions.topLevel,
+    }
+  });
+}
+
+function makeBarChart(canvasId, labels, datasets, yFormatter, horizontal = false) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: getCSSVar('--color-surface-2') || '#fff',
+          borderColor: getCSSVar('--color-border'),
+          borderWidth: 1,
+          titleColor: getCSSVar('--color-text'),
+          bodyColor: getCSSVar('--color-text-muted'),
+          padding: 10,
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${yFormatter(ctx.raw)}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false, display: !horizontal },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 } },
+        },
+        y: {
+          grid: { color: getCSSVar('--color-divider'), drawBorder: false },
+          ticks: { color: getCSSVar('--color-text-muted'), font: { size: 10 }, callback: yFormatter },
+        }
+      },
+      elements: { bar: { borderRadius: 4 } },
+    }
+  });
+}
+
+// ── Build Charts ─────────────────────────────────────────────────────
+let charts = {};
+
+function buildCharts() {
+  const d = chartDefaults();
+
+  // Price trend
+  charts.price = makeLineChart('chart-price', [
+    {
+      label: '98115',
+      data: PRICE_DATA['98115'],
+      borderColor: d.c98115,
+      backgroundColor: d.c98115 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+    {
+      label: '98125',
+      data: PRICE_DATA['98125'],
+      borderColor: d.c98125,
+      backgroundColor: d.c98125 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+    {
+      label: '98155',
+      data: PRICE_DATA['98155'],
+      borderColor: d.c98155,
+      backgroundColor: d.c98155 + '22',
+      borderWidth: 2.5,
+      fill: false,
+    },
+  ], v => `$${v}K`);
+
+  // DOM
+  charts.dom = makeLineChart('chart-dom', [
+    { label: '98115', data: DOM_DATA['98115'], borderColor: d.c98115, borderWidth: 2.5, fill: false },
+    { label: '98125', data: DOM_DATA['98125'], borderColor: d.c98125, borderWidth: 2.5, fill: false },
+    { label: '98155', data: DOM_DATA['98155'], borderColor: d.c98155, borderWidth: 2.5, fill: false },
+  ], v => `${v}d`);
+
+  // Inventory
+  charts.inventory = makeLineChart('chart-inventory', [
+    { label: '98115', data: INVENTORY_DATA['98115'], borderColor: d.c98115, backgroundColor: d.c98115 + '18', borderWidth: 2, fill: true },
+    { label: '98125', data: INVENTORY_DATA['98125'], borderColor: d.c98125, backgroundColor: d.c98125 + '18', borderWidth: 2, fill: true },
+    { label: '98155', data: INVENTORY_DATA['98155'], borderColor: d.c98155, backgroundColor: d.c98155 + '18', borderWidth: 2, fill: true },
+  ], v => `${v}`);
+
+  // YoY
+  charts.yoy = makeLineChart('chart-yoy', [
+    { label: '98115', data: YOY_DATA['98115'], borderColor: d.c98115, borderWidth: 2.5, fill: false },
+    { label: '98125', data: YOY_DATA['98125'], borderColor: d.c98125, borderWidth: 2.5, fill: false },
+    { label: '98155', data: YOY_DATA['98155'], borderColor: d.c98155, borderWidth: 2.5, fill: false },
+  ], v => `${v > 0 ? '+' : ''}${v}%`, {
+    topLevel: {},
+    yAxis: {}
+  });
+
+  // PSF bar
+  charts.psf = makeBarChart(
+    'chart-psf',
+    ['98115\nWedgwood/Ravenna', '98125\nLake City', '98155\nShoreline'],
+    [{
+      label: '$/sq ft',
+      data: [PSF_DATA['98115'], PSF_DATA['98125'], PSF_DATA['98155']],
+      backgroundColor: [d.c98115 + 'cc', d.c98125 + 'cc', d.c98155 + 'cc'],
+      borderColor: [d.c98115, d.c98125, d.c98155],
+      borderWidth: 1.5,
+    }],
+    v => `$${v}`
+  );
+}
+
+// ── Update chart colors on theme switch ──────────────────────────────
+function updateChartColors() {
+  const d = chartDefaults();
+  Object.values(charts).forEach(chart => {
+    chart.options.scales.x.grid.color = getCSSVar('--color-divider');
+    chart.options.scales.x.ticks.color = getCSSVar('--color-text-muted');
+    chart.options.scales.y.grid.color = getCSSVar('--color-divider');
+    chart.options.scales.y.ticks.color = getCSSVar('--color-text-muted');
+    chart.options.plugins.tooltip.backgroundColor = getCSSVar('--color-surface-2');
+    chart.options.plugins.tooltip.titleColor = getCSSVar('--color-text');
+    chart.options.plugins.tooltip.bodyColor = getCSSVar('--color-text-muted');
+    chart.options.plugins.tooltip.borderColor = getCSSVar('--color-border');
+  });
+
+  // Update price chart colors
+  if (charts.price) {
+    charts.price.data.datasets[0].borderColor = d.c98115;
+    charts.price.data.datasets[1].borderColor = d.c98125;
+    charts.price.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.dom) {
+    charts.dom.data.datasets[0].borderColor = d.c98115;
+    charts.dom.data.datasets[1].borderColor = d.c98125;
+    charts.dom.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.inventory) {
+    charts.inventory.data.datasets[0].borderColor = d.c98115;
+    charts.inventory.data.datasets[0].backgroundColor = d.c98115 + '18';
+    charts.inventory.data.datasets[1].borderColor = d.c98125;
+    charts.inventory.data.datasets[1].backgroundColor = d.c98125 + '18';
+    charts.inventory.data.datasets[2].borderColor = d.c98155;
+    charts.inventory.data.datasets[2].backgroundColor = d.c98155 + '18';
+  }
+  if (charts.yoy) {
+    charts.yoy.data.datasets[0].borderColor = d.c98115;
+    charts.yoy.data.datasets[1].borderColor = d.c98125;
+    charts.yoy.data.datasets[2].borderColor = d.c98155;
+  }
+  if (charts.psf) {
+    charts.psf.data.datasets[0].backgroundColor = [d.c98115 + 'cc', d.c98125 + 'cc', d.c98155 + 'cc'];
+    charts.psf.data.datasets[0].borderColor = [d.c98115, d.c98125, d.c98155];
+  }
+  Object.values(charts).forEach(c => c.update());
+}
+
+// ── ZIP Tab Filter ────────────────────────────────────────────────────
+const tabs = document.querySelectorAll('.zip-tab');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const zip = tab.dataset.zip;
+    tabs.forEach(t => {
+      t.classList.remove('active-all', 'active-98115', 'active-98125', 'active-98155');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.setAttribute('aria-selected', 'true');
+    if (zip === 'all') {
+      tab.classList.add('active-all');
+      showAllSeries();
+    } else {
+      tab.classList.add(`active-${zip}`);
+      filterToZip(zip);
+    }
+    renderKPIs(zip);
+  });
+});
+
+function showAllSeries() {
+  Object.values(charts).forEach(chart => {
+    if (chart.data.datasets) {
+      chart.data.datasets.forEach(ds => { ds.hidden = false; });
+      chart.update();
+    }
+  });
+}
+
+function filterToZip(zip) {
+  const idx = { '98115': 0, '98125': 1, '98155': 2 };
+  [charts.price, charts.dom, charts.inventory, charts.yoy].forEach(chart => {
+    if (!chart) return;
+    chart.data.datasets.forEach((ds, i) => {
+      ds.hidden = (i !== idx[zip]);
+    });
+    chart.update();
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+renderKPIs('all');
+buildCharts();
+  });
+})();
+</script>
