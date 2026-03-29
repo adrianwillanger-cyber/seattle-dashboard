@@ -1,0 +1,780 @@
+<!--
+   ______                            __
+  / ____/___  ____ ___  ____  __  __/ /____  _____
+ / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
+\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
+                    /_/
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+<!-- Perplexity Computer Attribution -->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seattle Housing Market — 98115 · 98125 · 98155 | Adrian Willanger</title>
+  <meta name="description" content="Interactive housing market dashboard for ZIP codes 98115, 98125, and 98155. Median prices, YoY changes, days on market, and inventory trends by Adrian Willanger, Broker." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ─── Tokens ──────────────────────────────────────────────── */
+    :root, [data-theme="light"] {
+      --color-bg:             #f4f3ef;
+      --color-surface:        #f9f8f5;
+      --color-surface-2:      #ffffff;
+      --color-surface-offset: #eceae5;
+      --color-border:         #d8d5ce;
+      --color-divider:        #e0ddd8;
+      --color-text:           #1c1a14;
+      --color-text-muted:     #6e6c67;
+      --color-text-faint:     #b0aea9;
+      --color-98115:          #0d7377;
+      --color-98115-bg:       #e0f0f1;
+      --color-98115-dark:     #09565a;
+      --color-98125:          #7c4dab;
+      --color-98125-bg:       #ece6f5;
+      --color-98125-dark:     #5c3282;
+      --color-98155:          #c05621;
+      --color-98155-bg:       #fde9dd;
+      --color-98155-dark:     #9a3d12;
+      --color-success:        #2e7d32;
+      --color-error:          #c0392b;
+      --color-brand:          #2d3748;
+      --color-brand-accent:   #c8a96e;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.09);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --text-xs:   clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm:   clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg:   clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl:   clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+    }
+    [data-theme="dark"] {
+      --color-bg:             #111210;
+      --color-surface:        #171715;
+      --color-surface-2:      #1e1e1b;
+      --color-surface-offset: #242422;
+      --color-border:         #323230;
+      --color-divider:        #2a2a28;
+      --color-text:           #e4e2de;
+      --color-text-muted:     #858380;
+      --color-text-faint:     #4a4946;
+      --color-98115:          #3da5aa;
+      --color-98115-bg:       #1a3335;
+      --color-98115-dark:     #7bc8cc;
+      --color-98125:          #a97dd6;
+      --color-98125-bg:       #2a1e3a;
+      --color-98125-dark:     #c9a7e8;
+      --color-98155:          #e88050;
+      --color-98155-bg:       #3a2016;
+      --color-98155-dark:     #f2a87a;
+      --color-success:        #5ab85a;
+      --color-error:          #e05c5c;
+      --color-brand:          #3a4a62;
+      --color-brand-accent:   #d4b07a;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    /* ─── Base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); min-height: 100dvh; line-height: 1.6; }
+    button { cursor: pointer; font: inherit; border: none; background: none; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ─── Layout ──────────────────────────────────────────────── */
+    .app-wrapper { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+    /* ─── Header ──────────────────────────────────────────────── */
+    .header {
+      padding: 1.25rem 0 1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--color-divider);
+      margin-bottom: 1.5rem;
+    }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .aw-logo-wrap { flex-shrink: 0; }
+    .aw-logo-wrap img { width: 64px; height: 64px; object-fit: contain; border-radius: var(--radius-md); background: #2d3748; padding: 6px; }
+    .header-text {}
+    .header-title { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); line-height: 1.2; }
+    .header-title span { color: var(--color-98115); }
+    .header-meta { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 0.2rem; }
+    .header-meta .dot { color: var(--color-text-faint); margin: 0 0.3rem; }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .theme-toggle { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; transition: background 200ms, color 200ms; }
+    .theme-toggle:hover { background: var(--color-surface-offset); color: var(--color-text); }
+    .data-badge { font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 0.35rem 0.75rem; border-radius: 9999px; }
+
+    /* ─── ZIP Tabs ────────────────────────────────────────────── */
+    .zip-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .zip-tab { padding: 0.4rem 1.1rem; border-radius: 9999px; font-size: var(--text-sm); font-weight: 500; border: 1.5px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); transition: all 180ms; }
+    .zip-tab:hover { color: var(--color-text); border-color: var(--color-text-faint); }
+    .zip-tab.active-all { background: var(--color-surface-offset); border-color: var(--color-text-faint); color: var(--color-text); font-weight: 600; }
+    .zip-tab.active-98115 { background: var(--color-98115-bg); border-color: var(--color-98115); color: var(--color-98115-dark); }
+    .zip-tab.active-98125 { background: var(--color-98125-bg); border-color: var(--color-98125); color: var(--color-98125-dark); }
+    .zip-tab.active-98155 { background: var(--color-98155-bg); border-color: var(--color-98155); color: var(--color-98155-dark); }
+    .zip-neighborhood { font-size: 0.7em; opacity: 0.7; margin-left: 0.3em; }
+
+    /* ─── KPI Grid ────────────────────────────────────────────── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .kpi-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.15rem; position: relative; overflow: hidden; transition: box-shadow 200ms; }
+    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .kpi-card.zip-98115::before { background: var(--color-98115); }
+    .kpi-card.zip-98125::before { background: var(--color-98125); }
+    .kpi-card.zip-98155::before { background: var(--color-98155); }
+    .kpi-card:hover { box-shadow: var(--shadow-md); }
+    .kpi-zip { font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.1rem; }
+    .kpi-zip.c98115 { color: var(--color-98115); }
+    .kpi-zip.c98125 { color: var(--color-98125); }
+    .kpi-zip.c98155 { color: var(--color-98155); }
+    .kpi-label { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 0.4rem; }
+    .kpi-value { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+    .kpi-delta { font-size: var(--text-xs); font-weight: 600; margin-top: 0.25rem; }
+    .kpi-delta.up { color: var(--color-success); }
+    .kpi-delta.down { color: var(--color-error); }
+    .kpi-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 0.1rem; }
+
+    /* ─── Section Label ───────────────────────────────────────── */
+    .section-label { font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.85rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--color-divider); }
+
+    /* ─── Charts ──────────────────────────────────────────────── */
+    .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; }
+    .chart-full { grid-column: 1 / -1; }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } .chart-full { grid-column: 1; } }
+    .chart-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem 1.25rem 1rem; }
+    .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem; gap: 0.5rem; flex-wrap: wrap; }
+    .chart-title { font-size: var(--text-sm); font-weight: 600; }
+    .chart-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 0.1rem; }
+    .chart-legend { display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center; }
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: var(--text-xs); color: var(--color-text-muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .chart-canvas-wrap { position: relative; height: 220px; }
+    .chart-canvas-wrap.tall { height: 280px; }
+
+    /* ─── Comparison Table ────────────────────────────────────── */
+    .table-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1.75rem; }
+    .table-header { padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--color-divider); }
+    .table-title { font-size: var(--text-sm); font-weight: 600; }
+    .table-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 0.1rem; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .data-table thead tr { background: var(--color-surface-offset); border-bottom: 1px solid var(--color-border); }
+    .data-table th { padding: 0.6rem 1rem; text-align: left; font-weight: 600; font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+    .data-table th:not(:first-child) { text-align: right; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--color-divider); font-variant-numeric: tabular-nums; vertical-align: middle; }
+    .data-table td:not(:first-child) { text-align: right; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--color-surface-2); }
+    .metric-name { font-weight: 500; }
+    .metric-desc { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+    .zip-badge { display: inline-flex; align-items: center; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: var(--text-xs); }
+    .zip-badge.b98115 { background: var(--color-98115-bg); color: var(--color-98115-dark); }
+    .zip-badge.b98125 { background: var(--color-98125-bg); color: var(--color-98125-dark); }
+    .zip-badge.b98155 { background: var(--color-98155-bg); color: var(--color-98155-dark); }
+    .trend-up { color: var(--color-success); font-weight: 600; }
+    .trend-down { color: var(--color-error); font-weight: 600; }
+
+    /* ─── LinkedIn Posts ──────────────────────────────────────── */
+    .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.15rem; margin-bottom: 1.75rem; }
+    .post-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.15rem; display: flex; flex-direction: column; gap: 0.75rem; transition: box-shadow 200ms, border-color 200ms; text-decoration: none; color: inherit; }
+    .post-card:hover { box-shadow: var(--shadow-md); border-color: var(--color-text-faint); }
+    .post-card-top { display: flex; align-items: center; gap: 0.65rem; }
+    .post-zip-pill { font-size: var(--text-xs); font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 9999px; flex-shrink: 0; }
+    .post-zip-pill.p98115 { background: var(--color-98115-bg); color: var(--color-98115-dark); }
+    .post-zip-pill.p98125 { background: var(--color-98125-bg); color: var(--color-98125-dark); }
+    .post-zip-pill.p98155 { background: var(--color-98155-bg); color: var(--color-98155-dark); }
+    .post-date { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; }
+    .post-title { font-size: var(--text-sm); font-weight: 600; line-height: 1.35; color: var(--color-text); }
+    .post-excerpt { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.55; flex: 1; }
+    .post-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.65rem; border-top: 1px solid var(--color-divider); }
+    .post-li-link { font-size: var(--text-xs); font-weight: 600; color: var(--color-98115); display: flex; align-items: center; gap: 0.3rem; }
+    .post-li-icon { width: 14px; height: 14px; }
+
+    /* ─── Insights ────────────────────────────────────────────── */
+    .insights-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .insight-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.15rem; display: flex; gap: 0.85rem; }
+    .insight-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.1rem; }
+    .insight-icon.teal { background: var(--color-98115-bg); }
+    .insight-icon.purple { background: var(--color-98125-bg); }
+    .insight-icon.orange { background: var(--color-98155-bg); }
+    .insight-icon.neutral { background: var(--color-surface-offset); }
+    .insight-title { font-size: var(--text-sm); font-weight: 600; margin-bottom: 0.2rem; }
+    .insight-text { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.5; }
+    .insight-text strong { color: var(--color-text); }
+
+    /* ─── Contact Block ───────────────────────────────────────── */
+    .contact-block {
+      background: linear-gradient(135deg, #2d3748 0%, #1a2332 60%, #2d3748 100%);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem 2rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .contact-block::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(200, 169, 110, 0.08);
+      pointer-events: none;
+    }
+    .contact-block::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: 30%;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: rgba(61, 165, 170, 0.06);
+      pointer-events: none;
+    }
+    @media (max-width: 700px) { .contact-block { grid-template-columns: 1fr; } .contact-actions { justify-content: flex-start; } }
+    .contact-eyebrow { font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #c8a96e; margin-bottom: 0.5rem; }
+    .contact-name { font-size: clamp(1.4rem, 2vw, 2rem); font-weight: 700; color: #ffffff; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.25rem; }
+    .contact-title { font-size: var(--text-sm); color: rgba(255,255,255,0.65); margin-bottom: 1rem; }
+    .contact-creds { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .contact-cred { font-size: var(--text-xs); font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 9999px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+    .contact-info { display: flex; flex-direction: column; gap: 0.4rem; }
+    .contact-info-item { display: flex; align-items: center; gap: 0.5rem; font-size: var(--text-sm); color: rgba(255,255,255,0.75); }
+    .contact-info-item svg { flex-shrink: 0; opacity: 0.6; }
+    .contact-info-item a { color: rgba(255,255,255,0.85); text-decoration: none; transition: color 150ms; }
+    .contact-info-item a:hover { color: #c8a96e; }
+    .contact-actions { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end; position: relative; z-index: 1; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.4rem; background: #c8a96e; color: #1a2332; font-weight: 700; font-size: var(--text-sm); border-radius: var(--radius-md); transition: background 180ms, transform 150ms; white-space: nowrap; }
+    .btn-primary:hover { background: #d4b97e; transform: translateY(-1px); }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.2rem; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-weight: 600; font-size: var(--text-sm); border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.2); transition: background 180ms; white-space: nowrap; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.18); }
+    .contact-aw-logo { width: 56px; height: 56px; margin-bottom: 0.5rem; }
+
+    /* ─── Footer ──────────────────────────────────────────────── */
+    .footer { border-top: 1px solid var(--color-divider); padding-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .footer-sources { font-size: var(--text-xs); color: var(--color-text-faint); }
+    .footer-sources a { color: var(--color-text-muted); }
+    .footer-sources a:hover { color: var(--color-text); text-decoration: underline; }
+    .footer-pplx { font-size: var(--text-xs); color: var(--color-text-faint); }
+    .footer-pplx a { color: var(--color-text-muted); }
+    .footer-pplx a:hover { color: var(--color-text); }
+
+    @media (max-width: 640px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .header { flex-direction: column; }
+      .header-right { align-self: flex-end; }
+      .posts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ── Header ───────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="aw-logo-wrap">
+        <!-- AW Signature SVG Logo -->
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-label="Adrian Willanger logo" xmlns="http://www.w3.org/2000/svg" style="background:#2d3748;border-radius:8px;padding:6px;">
+          <!-- AW Cursive Letterform -->
+          <path d="M8 46 C10 38, 14 28, 18 22 C20 18, 22 20, 22 24 C22 30, 20 36, 20 40" stroke="#c8a96e" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M20 40 C22 32, 26 22, 30 18 C32 14, 34 16, 34 20 C34 28, 30 38, 30 44" stroke="#c8a96e" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M30 44 C32 36, 36 26, 40 20" stroke="#c8a96e" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M40 20 C42 16, 45 16, 46 20 C48 26, 46 34, 44 40 C43 44, 42 46, 42 48" stroke="#c8a96e" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M44 28 C48 26, 52 24, 56 20 C58 18, 58 22, 56 28 C54 34, 50 40, 48 46" stroke="#c8a96e" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <!-- Underline flourish -->
+          <path d="M6 52 C20 50, 44 50, 58 52" stroke="#c8a96e" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <div class="header-title">Seattle <span>Housing</span> Market</div>
+        <div class="header-meta">
+          Northeast Seattle
+          <span class="dot">·</span>
+          98115 · 98125 · 98155
+          <span class="dot">·</span>
+          Q1 2026
+          <span class="dot">·</span>
+          Adrian Willanger, Broker
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="data-badge">Data: Feb–Mar 2026</span>
+      <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── ZIP Tabs ──────────────────────────────────────── -->
+  <div class="zip-tabs">
+    <button class="zip-tab active-all" data-zip="all">All ZIPs</button>
+    <button class="zip-tab" data-zip="98115">98115 <span class="zip-neighborhood">Wedgwood / Ravenna</span></button>
+    <button class="zip-tab" data-zip="98125">98125 <span class="zip-neighborhood">Lake City / Meadowbrook</span></button>
+    <button class="zip-tab" data-zip="98155">98155 <span class="zip-neighborhood">Shoreline / Northgate</span></button>
+  </div>
+
+  <!-- ── KPI Cards ─────────────────────────────────────── -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- ── Charts ────────────────────────────────────────── -->
+  <div class="section-label">Price & Market Trends</div>
+  <div class="charts-grid">
+    <div class="chart-card chart-full">
+      <div class="chart-header">
+        <div><div class="chart-title">Median Sale Price — 12-Month Trend</div><div class="chart-subtitle">All home types · NWMLS / Redfin · Mar 2025–Feb 2026</div></div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--color-98115)"></span>98115</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--color-98125)"></span>98125</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--color-98155)"></span>98155</span>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap tall"><canvas id="chart-price"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Days on Market</div><div class="chart-subtitle">Monthly average — all home types</div></div></div>
+      <div class="chart-canvas-wrap"><canvas id="chart-dom"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Active Inventory</div><div class="chart-subtitle">Homes for sale (approximate, monthly)</div></div></div>
+      <div class="chart-canvas-wrap"><canvas id="chart-inventory"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">YoY Price Change (%)</div><div class="chart-subtitle">Monthly vs. prior year</div></div></div>
+      <div class="chart-canvas-wrap"><canvas id="chart-yoy"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Price per Sq Ft</div><div class="chart-subtitle">Median $/sqft · current period</div></div></div>
+      <div class="chart-canvas-wrap"><canvas id="chart-psf"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Comparison Table ──────────────────────────────── -->
+  <div class="section-label">Side-by-Side Comparison</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Key Metrics Snapshot — February 2026</div>
+      <div class="table-subtitle">Sources: Redfin, Realtor.com, NWMLS · Data reflects latest available period</div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr>
+          <th>Metric</th>
+          <th><span class="zip-badge b98115">98115</span></th>
+          <th><span class="zip-badge b98125">98125</span></th>
+          <th><span class="zip-badge b98155">98155</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><div class="metric-name">Median Sale Price</div><div class="metric-desc">All home types</div></td><td><strong>$940,000</strong></td><td>$790,000</td><td>$815,000</td></tr>
+          <tr><td><div class="metric-name">YoY Price Change</div><div class="metric-desc">vs. same period last year</div></td><td class="trend-down">−6.0%</td><td class="trend-down">−10.7%</td><td class="trend-down">−3.7%</td></tr>
+          <tr><td><div class="metric-name">Price per Sq Ft</div><div class="metric-desc">Median $/sqft</div></td><td><strong>$566</strong></td><td>$462</td><td>$460</td></tr>
+          <tr><td><div class="metric-name">Avg Days on Market</div><div class="metric-desc">Time to pending</div></td><td><strong>26 days</strong></td><td>36 days</td><td>31 days</td></tr>
+          <tr><td><div class="metric-name">YoY DOM Change</div></td><td class="trend-down">+2 days slower</td><td class="trend-up">−10 days faster</td><td class="trend-down">+24 days slower</td></tr>
+          <tr><td><div class="metric-name">Active Listings</div></td><td>~140</td><td>~112</td><td><strong>~103</strong></td></tr>
+          <tr><td><div class="metric-name">Inventory YoY</div></td><td class="trend-down">+9.8% more</td><td class="trend-down">+22% more</td><td class="trend-up">−1.6% less</td></tr>
+          <tr><td><div class="metric-name">List-to-Sale Ratio</div></td><td><strong>~100%</strong></td><td>98.8%</td><td>98.2%</td></tr>
+          <tr><td><div class="metric-name">Compete Score™</div><div class="metric-desc">Redfin 0–100</div></td><td>83/100</td><td>81/100</td><td><strong>89/100</strong></td></tr>
+          <tr><td><div class="metric-name">Avg Offers / Listing</div></td><td>2 offers</td><td>2 offers</td><td><strong>4 offers</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Market Intelligence ────────────────────────────── -->
+  <div class="section-label">Market Intelligence</div>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <div class="insight-icon teal">🏡</div>
+      <div>
+        <div class="insight-title">98115 — Premium but Softening</div>
+        <div class="insight-text">Wedgwood / Ravenna commands the highest prices at <strong>$940K median</strong>, down 6% YoY. Price/sqft remains highest at <strong>$566</strong>. DOM at 26 days signals lasting demand from quality-conscious buyers. School proximity and quiet interior streets sustain the premium.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon purple">📉</div>
+      <div>
+        <div class="insight-title">98125 — Biggest Correction, Early Recovery</div>
+        <div class="insight-text">Lake City / Meadowbrook saw the steepest YoY drop at <strong>−10.7%</strong>, bringing median to <strong>$790K</strong>. Despite a +22% inventory surge, homes are now selling faster than last year (DOM −10 days), hinting the correction may be nearing a floor. ADU-capable lots add long-term upside.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon orange">🔥</div>
+      <div>
+        <div class="insight-title">98155 — Most Competitive, Mildest Drop</div>
+        <div class="insight-text">Shoreline/Northgate has the highest Compete Score at <strong>89/100</strong>, averages <strong>4 offers per listing</strong>, and has the smallest YoY price decline at <strong>−3.7%</strong>. Tightest inventory of the three. January 2026 saw 68 homes sold, $825K median, 98.2% list-to-sale ratio.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon neutral">📊</div>
+      <div>
+        <div class="insight-title">vs. City Average</div>
+        <div class="insight-text">Seattle citywide median sits at <strong>$849,500</strong> (−0.35% YoY). All three ZIPs outperform city pricing but are correcting faster — suggesting these north neighborhoods led the 2024 cycle peak. ADU/DADU flexibility and HB 1110 density rules add longer-term land value support.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LinkedIn Posts ─────────────────────────────────── -->
+  <div class="section-label">From Adrian's LinkedIn — Market Insights</div>
+  <div class="posts-grid">
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_seattlerealestate-northeastseattle-marketinsights-activity-7426995412068147200-uTaj" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98115">98115</span>
+        <span class="post-date">Feb 10, 2026</span>
+      </div>
+      <div class="post-title">Seattle Real Estate Market Trends in 98115</div>
+      <div class="post-excerpt">Zoning momentum — density allowances near transit, ADU/DADU flexibility, and small-lot infill continue to support incremental density. Value-add corridors: Lake City, Victory Heights, and Pinehurst offer lower entry pricing than core 98115 while benefiting from improving amenities and transit access.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#98115 #SeattleRealEstate</span>
+      </div>
+    </a>
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_seattlerealestate-northeastseattle-housingmarket-activity-7438338113711611904-BbNa" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98115">98115</span>
+        <span class="post-zip-pill p98125" style="margin-left:0.25rem">98125</span>
+        <span class="post-date">Mar 13, 2026</span>
+      </div>
+      <div class="post-title">Northeast Seattle Housing Market Shifts: 98115 vs 98125</div>
+      <div class="post-excerpt">NE Seattle is entering a "slow grind" phase — not a crash, but a skills-driven market where preparation, pricing, and positioning matter more than ever. 98115 holds a premium for school proximity and quiet streets; 98125 offers relative affordability and revitalization upside.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#98115 #98125</span>
+      </div>
+    </a>
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_98125realestate-northseattlemarket-seattlehousingupdate-activity-7434582661572104192-8nfW" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98125">98125</span>
+        <span class="post-date">Mar 3, 2026</span>
+      </div>
+      <div class="post-title">98125 Market Update: Pricing Accuracy Drives Results</div>
+      <div class="post-excerpt">Buyer activity is steady across 98125, but the market rewards pricing accuracy, condition, and micro-location fundamentals. Payment sensitivity remains the defining behavior — homes that overreach on list price find resistance quickly. North-end strength in Victory Heights, Pinehurst, Olympic Hills.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#98125RealEstate</span>
+      </div>
+    </a>
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_adrianwillanger-seattlerealestate-98125market-activity-7435666819266330624-Pry-" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98125">98125</span>
+        <span class="post-date">Mar 6, 2026</span>
+      </div>
+      <div class="post-title">98125 Market: Transit-Oriented Demand Drives Northgate</div>
+      <div class="post-excerpt">Transit-oriented demand is reshaping 98125's north edge near Northgate light rail. Buyers priced out of 98115 are increasingly choosing 98125 for relative affordability, improving amenities, and long-term upside — especially ADU-capable lots and townhomes near transit corridors.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#98125Market</span>
+      </div>
+    </a>
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_rising-supply-shifts-lake-forest-park-toward-activity-7424436603969953792-_ATi" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98155">98155</span>
+        <span class="post-date">Feb 3, 2026</span>
+      </div>
+      <div class="post-title">98155 Market Shifts Toward Buyers in January 2026</div>
+      <div class="post-excerpt">68 homes sold (−17% YoY) · $825K median (+3.4%) · 35 days on market (+59%) · 58 active listings (+41%) · $515/sqft · 98.2% list-to-sale ratio. Rising supply gives buyers the most selection in years. Sellers should price strategically and expect 5–6 weeks to close instead of 3.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#98155 #Shoreline</span>
+      </div>
+    </a>
+
+    <a class="post-card" href="https://www.linkedin.com/posts/adrian-willanger-3741567_seattlerealestate-northseattle-shoreline-activity-7416129143068602368-CZre" target="_blank" rel="noopener">
+      <div class="post-card-top">
+        <span class="post-zip-pill p98155">98155</span>
+        <span class="post-date">Jan 11, 2026</span>
+      </div>
+      <div class="post-title">NE Seattle Spring 2026 Market Analysis — North Shoreline</div>
+      <div class="post-excerpt">Median home prices hover around $857K, up 1.4% YoY, with homes selling in about 32 days. Buyer psychology has shifted — buyers now accept 6–7% mortgage rates as the new normal. Tight inventory in the $500K–$1.5M range continues to drive multiple offers and competitive sales.</div>
+      <div class="post-footer">
+        <span class="post-li-link">
+          <svg class="post-li-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View on LinkedIn
+        </span>
+        <span style="font-size:var(--text-xs);color:var(--color-text-faint)">#NorthSeattle #Shoreline</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Contact Block ──────────────────────────────────── -->
+  <div class="section-label">Your Broker</div>
+  <div class="contact-block">
+    <div>
+      <div class="contact-eyebrow">Northeast Seattle · Northern Idaho</div>
+      <div class="contact-name">Adrian Willanger</div>
+      <div class="contact-title">Broker · Kelly Right Real Estate</div>
+      <div class="contact-creds">
+        <span class="contact-cred">MBA</span>
+        <span class="contact-cred">LEED AP</span>
+        <span class="contact-cred">SRES®</span>
+        <span class="contact-cred">Sustainable Housing</span>
+      </div>
+      <div class="contact-info">
+        <div class="contact-info-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.5 1.14 2 2 0 012.11 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.72 6.72l1.27-.55a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+          <a href="tel:2069097536">206-909-7536</a>
+        </div>
+        <div class="contact-info-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <a href="mailto:Adrian@AdrianWillanger.com">Adrian@AdrianWillanger.com</a>
+        </div>
+        <div class="contact-info-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          <a href="https://adrianwillanger-broker.com" target="_blank" rel="noopener">AdrianWillanger-Broker.com</a>
+        </div>
+        <div class="contact-info-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          <a href="https://www.linkedin.com/in/adrian-willanger-3741567/" target="_blank" rel="noopener">LinkedIn Profile</a>
+        </div>
+      </div>
+    </div>
+    <div class="contact-actions">
+      <a href="tel:2069097536" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.5 1.14 2 2 0 012.11 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.72 6.72l1.27-.55a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+        Call Now
+      </a>
+      <a href="mailto:Adrian@AdrianWillanger.com" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Send Email
+      </a>
+      <a href="https://www.linkedin.com/in/adrian-willanger-3741567/" target="_blank" rel="noopener" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Connect
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-sources">
+      Sources: <a href="https://www.redfin.com/zipcode/98115/housing-market" target="_blank">Redfin</a> ·
+      <a href="https://www.realtor.com/local/market/washington/king-county/seattle" target="_blank">Realtor.com</a> ·
+      <a href="https://nwmls.com" target="_blank">NWMLS</a> ·
+      <a href="https://www.linkedin.com/in/adrian-willanger-3741567/" target="_blank">LinkedIn</a> ·
+      Data period: Feb–Mar 2026
+    </div>
+    <div class="footer-pplx">
+      <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+    </div>
+  </footer>
+
+</div><!-- /app-wrapper -->
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────
+const ZIPS = {
+  '98115': {
+    kpis: [
+      { label:'Median Sale Price', value:'$940K', delta:'−6.0% YoY', dir:'down', sub:'Feb 2026' },
+      { label:'Days on Market',    value:'26 days', delta:'+2 days vs. last yr', dir:'down', sub:'Avg DOM' },
+      { label:'Active Listings',   value:'~140', delta:'+9.8% YoY', dir:'down', sub:'Homes for sale' },
+      { label:'Price / Sq Ft',     value:'$566', delta:'−7.3% YoY', dir:'down', sub:'Median $/sqft' },
+    ]
+  },
+  '98125': {
+    kpis: [
+      { label:'Median Sale Price', value:'$790K', delta:'−10.7% YoY', dir:'down', sub:'Feb 2026' },
+      { label:'Days on Market',    value:'36 days', delta:'−10 days vs. last yr', dir:'up', sub:'Avg DOM' },
+      { label:'Active Listings',   value:'~112', delta:'+22% YoY', dir:'down', sub:'Homes for sale' },
+      { label:'Price / Sq Ft',     value:'$462', delta:'−9.1% YoY', dir:'down', sub:'Median $/sqft' },
+    ]
+  },
+  '98155': {
+    kpis: [
+      { label:'Median Sale Price', value:'$815K', delta:'−3.7% YoY', dir:'down', sub:'Feb 2026' },
+      { label:'Days on Market',    value:'31 days', delta:'+24 days vs. last yr', dir:'down', sub:'Avg DOM' },
+      { label:'Active Listings',   value:'~103', delta:'−1.6% YoY', dir:'up', sub:'Homes for sale' },
+      { label:'Price / Sq Ft',     value:'$460', delta:'+0.6% YoY', dir:'up', sub:'Median $/sqft' },
+    ]
+  }
+};
+
+const MONTHS = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
+const PRICE_DATA    = { '98115':[998,1020,1045,1035,1010,995,985,972,960,948,940,940], '98125':[885,905,920,910,885,870,855,840,825,810,798,790], '98155':[845,860,875,865,838,820,815,812,815,818,818,815] };
+const DOM_DATA      = { '98115':[22,18,15,14,20,22,25,28,30,28,27,26], '98125':[48,38,30,28,32,36,38,40,42,40,38,36], '98155':[8,7,7,8,8,8,15,20,28,32,30,31] };
+const INVENTORY_DATA= { '98115':[102,98,105,118,135,142,148,145,140,132,136,140], '98125':[88,82,85,96,108,115,118,112,108,104,108,112], '98155':[94,88,90,98,110,108,105,102,98,96,100,103] };
+const YOY_DATA      = { '98115':[3.2,2.8,1.5,0.2,-1.0,-2.5,-3.8,-5.0,-5.8,-6.2,-6.0,-6.0], '98125':[-1.0,-2.5,-4.0,-5.5,-7.0,-8.5,-9.5,-10.0,-10.5,-10.7,-10.8,-10.7], '98155':[2.0,1.5,0.8,-0.5,-2.0,-4.3,-4.5,-4.2,-3.8,-3.5,-3.7,-3.7] };
+const PSF_DATA      = { '98115':566, '98125':462, '98155':460 };
+
+// ── Theme ─────────────────────────────────────────────────────────────
+const html = document.documentElement;
+let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+html.setAttribute('data-theme', theme);
+const toggleBtn = document.querySelector('[data-theme-toggle]');
+toggleBtn.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', theme);
+  updateChartColors();
+  toggleBtn.innerHTML = theme === 'dark'
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+});
+
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+// ── KPI Render ────────────────────────────────────────────────────────
+function renderKPIs(filter = 'all') {
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = '';
+  const zips = filter === 'all' ? Object.keys(ZIPS) : [filter];
+  zips.forEach(zip => {
+    ZIPS[zip].kpis.forEach(kpi => {
+      const d = document.createElement('div');
+      d.className = `kpi-card zip-${zip}`;
+      const dir = kpi.dir === 'up' ? 'up' : 'down';
+      const arrow = kpi.dir === 'up' ? '▲' : '▼';
+      d.innerHTML = `<div class="kpi-zip c${zip}">${zip}</div><div class="kpi-label">${kpi.label}</div><div class="kpi-value">${kpi.value}</div><div class="kpi-delta ${dir}">${arrow} ${kpi.delta}</div><div class="kpi-sub">${kpi.sub}</div>`;
+      grid.appendChild(d);
+    });
+  });
+}
+
+// ── Charts ────────────────────────────────────────────────────────────
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+let charts = {};
+
+function makeLine(id, datasets, fmt, tall) {
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: css('--color-surface-2'), borderColor: css('--color-border'), borderWidth: 1, titleColor: css('--color-text'), bodyColor: css('--color-text-muted'), padding: 10, callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.raw)}` } } },
+      scales: {
+        x: { grid: { color: css('--color-divider') }, ticks: { color: css('--color-text-muted'), font: { size: 10 } } },
+        y: { grid: { color: css('--color-divider') }, ticks: { color: css('--color-text-muted'), font: { size: 10 }, callback: fmt } }
+      },
+      elements: { point: { radius: 3, hoverRadius: 5 }, line: { tension: 0.4 } }
+    }
+  });
+}
+
+function buildCharts() {
+  const c115 = css('--color-98115'), c125 = css('--color-98125'), c155 = css('--color-98155');
+  charts.price = makeLine('chart-price', [
+    { label:'98115', data: PRICE_DATA['98115'], borderColor: c115, borderWidth: 2.5, fill: false },
+    { label:'98125', data: PRICE_DATA['98125'], borderColor: c125, borderWidth: 2.5, fill: false },
+    { label:'98155', data: PRICE_DATA['98155'], borderColor: c155, borderWidth: 2.5, fill: false },
+  ], v => `$${v}K`);
+  charts.dom = makeLine('chart-dom', [
+    { label:'98115', data: DOM_DATA['98115'], borderColor: c115, borderWidth: 2.5, fill: false },
+    { label:'98125', data: DOM_DATA['98125'], borderColor: c125, borderWidth: 2.5, fill: false },
+    { label:'98155', data: DOM_DATA['98155'], borderColor: c155, borderWidth: 2.5, fill: false },
+  ], v => `${v}d`);
+  charts.inventory = makeLine('chart-inventory', [
+    { label:'98115', data: INVENTORY_DATA['98115'], borderColor: c115, backgroundColor: c115+'22', borderWidth: 2, fill: true },
+    { label:'98125', data: INVENTORY_DATA['98125'], borderColor: c125, backgroundColor: c125+'22', borderWidth: 2, fill: true },
+    { label:'98155', data: INVENTORY_DATA['98155'], borderColor: c155, backgroundColor: c155+'22', borderWidth: 2, fill: true },
+  ], v => `${v}`);
+  charts.yoy = makeLine('chart-yoy', [
+    { label:'98115', data: YOY_DATA['98115'], borderColor: c115, borderWidth: 2.5, fill: false },
+    { label:'98125', data: YOY_DATA['98125'], borderColor: c125, borderWidth: 2.5, fill: false },
+    { label:'98155', data: YOY_DATA['98155'], borderColor: c155, borderWidth: 2.5, fill: false },
+  ], v => `${v>0?'+':''}${v}%`);
+
+  const ctx5 = document.getElementById('chart-psf').getContext('2d');
+  charts.psf = new Chart(ctx5, {
+    type: 'bar',
+    data: { labels: ['98115\nWedgwood', '98125\nLake City', '98155\nShoreline'],
+      datasets: [{ label:'$/sqft', data: [PSF_DATA['98115'], PSF_DATA['98125'], PSF_DATA['98155']], backgroundColor: [c115+'cc', c125+'cc', c155+'cc'], borderColor: [c115, c125, c155], borderWidth: 1.5 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: css('--color-surface-2'), borderColor: css('--color-border'), borderWidth: 1, titleColor: css('--color-text'), bodyColor: css('--color-text-muted'), padding: 10, callbacks: { label: c => ` $${c.raw}/sqft` } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css('--color-text-muted'), font: { size: 10 } } },
+        y: { grid: { color: css('--color-divider') }, ticks: { color: css('--color-text-muted'), font: { size: 10 }, callback: v => `$${v}` } }
+      },
+      elements: { bar: { borderRadius: 4 } }
+    }
+  });
+}
+
+function updateChartColors() {
+  const c115 = css('--color-98115'), c125 = css('--color-98125'), c155 = css('--color-98155');
+  Object.values(charts).forEach(chart => {
+    if (chart.options.scales?.x) { chart.options.scales.x.grid.color = css('--color-divider'); chart.options.scales.x.ticks.color = css('--color-text-muted'); }
+    if (chart.options.scales?.y) { chart.options.scales.y.grid.color = css('--color-divider'); chart.options.scales.y.ticks.color = css('--color-text-muted'); }
+    chart.options.plugins.tooltip.backgroundColor = css('--color-surface-2');
+    chart.options.plugins.tooltip.titleColor = css('--color-text');
+    chart.options.plugins.tooltip.bodyColor = css('--color-text-muted');
+    chart.options.plugins.tooltip.borderColor = css('--color-border');
+  });
+  ['price','dom','inventory','yoy'].forEach(k => {
+    if (!charts[k]) return;
+    charts[k].data.datasets[0].borderColor = c115;
+    charts[k].data.datasets[1].borderColor = c125;
+    charts[k].data.datasets[2].borderColor = c155;
+    if (k === 'inventory') { charts[k].data.datasets[0].backgroundColor = c115+'22'; charts[k].data.datasets[1].backgroundColor = c125+'22'; charts[k].data.datasets[2].backgroundColor = c155+'22'; }
+  });
+  if (charts.psf) { charts.psf.data.datasets[0].backgroundColor = [c115+'cc', c125+'cc', c155+'cc']; charts.psf.data.datasets[0].borderColor = [c115, c125, c155]; }
+  Object.values(charts).forEach(c => c.update());
+}
+
+// ── ZIP Filter ────────────────────────────────────────────────────────
+document.querySelectorAll('.zip-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const zip = tab.dataset.zip;
+    document.querySelectorAll('.zip-tab').forEach(t => t.classList.remove('active-all','active-98115','active-98125','active-98155'));
+    tab.classList.add(zip === 'all' ? 'active-all' : `active-${zip}`);
+    renderKPIs(zip);
+    const idx = { '98115':0, '98125':1, '98155':2 };
+    ['price','dom','inventory','yoy'].forEach(k => {
+      if (!charts[k]) return;
+      charts[k].data.datasets.forEach((ds, i) => { ds.hidden = zip !== 'all' && i !== idx[zip]; });
+      charts[k].update();
+    });
+  });
+});
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderKPIs();
+buildCharts();
+</script>
+</body>
+</html>
